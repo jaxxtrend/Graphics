@@ -2080,7 +2080,6 @@ namespace UnityEngine.Rendering.HighDefinition
             m_PostProcessSystem.BeginFrame(cmd, hdCamera, this);
 
             ApplyDebugDisplaySettings(hdCamera, cmd);
-            m_SkyManager.UpdateCurrentSkySettings(hdCamera);
 
             SetupCameraProperties(hdCamera, renderContext, cmd);
 
@@ -2951,6 +2950,7 @@ namespace UnityEngine.Rendering.HighDefinition
                     hdProbeCullState = HDProbeSystem.PrepareCull(camera);
 
                 // We need to set the ambient probe here because it's passed down to objects during the culling process.
+                skyManager.UpdateCurrentSkySettings(hdCamera);
                 skyManager.SetupAmbientProbe(hdCamera);
 
                 using (new ProfilingScope(null, ProfilingSampler.Get(HDProfileId.CullResultsCull)))
@@ -2966,7 +2966,7 @@ namespace UnityEngine.Rendering.HighDefinition
                     }
                 }
 
-                if (hdCamera.frameSettings.IsEnabled(FrameSettingsField.PlanarProbe))
+                if (hdCamera.frameSettings.IsEnabled(FrameSettingsField.PlanarProbe) && hdProbeCullState.cullingGroup != null)
                     HDProbeSystem.QueryCullResults(hdProbeCullState, ref cullingResults.hdProbeCullingResults);
                 else
                     cullingResults.hdProbeCullingResults = default;
@@ -5019,7 +5019,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 // Mark the HDCamera as persistant so it's not deleted because it's camera is disabled.
                 overrideHDCamera.isPersistent = true;
 
-                // We need to patch the pixel rect of the camera because by default the camera size is synchronized 
+                // We need to patch the pixel rect of the camera because by default the camera size is synchronized
                 // with the game view and so it breaks in the scene view. Note that we can't use Camera.pixelRect here
                 // because when we assign it, the change is not instantaneous and is not reflected in pixelWidth/pixelHeight.
                 overrideHDCamera.OverridePixelRect(hdrp.m_CurrentHDCamera.camera.pixelRect);
@@ -5049,7 +5049,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
                 if (overrideCamera == hdrp.m_CurrentHDCamera.camera)
                     return false;
-                
+
                 return true;
             }
 
